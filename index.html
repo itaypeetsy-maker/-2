@@ -13,72 +13,64 @@
 </head>
 <body class="bg-[#f8fafc]">
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState } = React;
-
         function App() {
             const [query, setQuery] = useState('');
             const [loading, setLoading] = useState(false);
             const [results, setResults] = useState(null);
+            const [error, setError] = useState(null);
 
             const handleSearch = async (e) => {
                 e.preventDefault();
+                if (!query.trim()) return;
                 setLoading(true);
+                setError(null);
+                setResults(null);
                 try {
                     const res = await fetch('/api/research', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ query })
                     });
+                    if (!res.ok) throw new Error('שגיאה בשרת');
                     const data = await res.json();
                     setResults(data);
                 } catch (err) {
-                    alert("שגיאה בחיבור לשרת");
+                    setError("אופס! השרת לא עונה כרגע. וודא שהמפתח הוגדר ב-Vercel ועשית Redeploy.");
                 } finally {
                     setLoading(false);
                 }
             };
 
             return (
-                <div class="max-w-3xl mx-auto p-4 md:p-8">
-                    <header class="text-center mb-12">
-                        <div class="inline-block bg-indigo-600 p-5 rounded-3xl text-white mb-4 shadow-lg">🎓</div>
-                        <h1 class="text-4xl font-black text-slate-900">חוקר העתיד</h1>
-                    </header>
-
-                    <form onSubmit={handleSearch} class="bg-white rounded-[2rem] shadow-xl p-2 flex flex-col md:flex-row gap-2 border border-slate-100">
-                        <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="מה תרצו לחקור היום?" class="flex-1 p-4 rounded-xl focus:outline-none text-xl" />
-                        <button type="submit" disabled={loading} class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 disabled:bg-slate-300">
-                            {loading ? "חוקר..." : "התחל מחקר"}
+                <div className="max-w-3xl mx-auto p-4 md:p-8 text-center">
+                    <div className="bg-indigo-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto text-white text-4xl shadow-lg mb-6">🎓</div>
+                    <h1 className="text-4xl font-black text-slate-900 mb-8">חוקר העתיד</h1>
+                    <form onSubmit={handleSearch} className="bg-white rounded-[2rem] shadow-xl p-2 flex gap-2 border border-slate-100 mb-10">
+                        <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="מה תרצו לחקור היום?" className="flex-1 p-4 rounded-xl focus:outline-none text-xl" />
+                        <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-indigo-700 disabled:bg-slate-300">
+                            {loading ? "חוקר..." : "התחל"}
                         </button>
                     </form>
-
-                    {results && (
-                        <div class="mt-10 space-y-6">
-                            <div class="bg-white p-8 rounded-[2rem] border-r-4 border-amber-400 shadow-sm">
-                                <h2 class="text-amber-600 font-bold mb-2">💡 רמז למחקר:</h2>
-                                <p class="text-xl italic">"{results.hint}"</p>
+                    {error && <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100">{error}</div>}
+                    {results && results.curatedLinks && (
+                        <div className="text-right space-y-6">
+                            <div className="bg-white p-6 rounded-[2rem] border-r-8 border-amber-400 shadow-sm">
+                                <p className="text-xl italic font-bold text-slate-700">"{results.hint}"</p>
                             </div>
-                            <div class="grid gap-4">
-                                {results.curatedLinks.map((link, i) => (
-                                    <a key={i} href={link.url} target="_blank" class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md border border-slate-100 flex justify-between items-center transition-all">
-                                        <div>
-                                            <h4 class="font-bold text-lg text-indigo-600">{link.title}</h4>
-                                            <p class="text-slate-500">{link.description}</p>
-                                        </div>
-                                        <span>🔗</span>
-                                    </a>
-                                ))}
-                            </div>
+                            {results.curatedLinks.map((link, i) => (
+                                <a key={i} href={link.url} target="_blank" className="block bg-white p-6 rounded-3xl shadow-sm border hover:border-indigo-400 transition-all">
+                                    <h4 className="font-bold text-indigo-600 text-lg">{link.title}</h4>
+                                    <p className="text-slate-500">{link.description}</p>
+                                </a>
+                            ))}
                         </div>
                     )}
                 </div>
             );
         }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
