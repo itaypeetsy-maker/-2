@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-slate-50 font-sans">
     <div id="root"></div>
@@ -23,6 +24,7 @@
                 e.preventDefault();
                 setLoading(true);
                 setError(null);
+                setResults(null);
                 try {
                     const res = await fetch('/api/research', {
                         method: 'POST',
@@ -30,32 +32,73 @@
                         body: JSON.stringify({ query })
                     });
                     const data = await res.json();
-                    if (!res.ok) throw new Error(data.details || 'שגיאת שרת');
+                    if (!res.ok) throw new Error('שגיאת תקשורת עם השרת');
                     setResults(data);
                 } catch (err) {
-                    setError("אופס! וודא שהמפתח הוגדר ב-Vercel ושעשית Redeploy.");
+                    setError("אופס! נסה שוב בעוד רגע.");
                 } finally {
                     setLoading(false);
                 }
             };
 
             return (
-                <div className="max-w-2xl mx-auto p-6 text-center">
-                    <h1 className="text-4xl font-bold mb-8">חוקר העתיד 🎓</h1>
-                    <form onSubmit={search} className="flex gap-2 mb-8">
-                        <input value={query} onChange={e => setQuery(e.target.value)} className="flex-1 p-3 border rounded-xl" placeholder="מה תרצה לחקור?" />
-                        <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">{loading ? 'חוקר...' : 'חפש'}</button>
-                    </form>
-                    {error && <div className="p-4 bg-red-100 text-red-700 rounded-xl mb-4">{error}</div>}
+                <div className="max-w-3xl mx-auto p-6">
+                    <div className="text-center mb-10">
+                        <h1 className="text-4xl font-black text-indigo-900 mb-4">חוקר העתיד 🚀</h1>
+                        <form onSubmit={search} className="relative flex items-center">
+                            <input 
+                                value={query} 
+                                onChange={e => setQuery(e.target.value)} 
+                                className="w-full p-4 pr-4 rounded-2xl shadow-lg border-2 border-indigo-100 focus:border-indigo-500 outline-none text-lg" 
+                                placeholder="מה תרצה ללמוד היום?" 
+                            />
+                            <button className="absolute left-2 bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 transition-all">
+                                {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
+                            </button>
+                        </form>
+                    </div>
+
+                    {error && <div className="bg-red-100 text-red-700 p-4 rounded-xl text-center">{error}</div>}
+
+                    {loading && (
+                        <div className="text-center py-10">
+                            <div className="text-2xl font-bold text-indigo-400 animate-pulse">ה-AI חושב ומחפש מקורות...</div>
+                        </div>
+                    )}
+
                     {results && (
-                        <div className="text-right space-y-4">
-                            <div className="bg-amber-50 p-4 rounded-xl border-r-4 border-amber-400 font-bold">{results.hint}</div>
-                            {results.curatedLinks?.map((l, i) => (
-                                <a key={i} href={l.url} target="_blank" className="block p-4 bg-white shadow rounded-xl hover:border-blue-500 border border-transparent transition-all">
-                                    <h3 className="font-bold text-blue-600">{l.title}</h3>
-                                    <p className="text-sm text-gray-600">{l.description}</p>
-                                </a>
-                            ))}
+                        <div className="space-y-8 fade-in">
+                            {/* כותרת ותשובה */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border-r-4 border-indigo-500">
+                                <h2 className="text-xl font-bold mb-2 text-gray-800">💡 התובנה המרכזית:</h2>
+                                <p className="text-gray-600 leading-relaxed">{results.summary}</p>
+                            </div>
+
+                            {/* קישורים למאמרים */}
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2"><i className="fas fa-book-open text-blue-500"></i> מאמרים ומקורות</h3>
+                                <div className="grid gap-4">
+                                    {results.webLinks?.map((link, i) => (
+                                        <a key={i} href={link.url} target="_blank" className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col group">
+                                            <span className="font-bold text-blue-600 group-hover:underline">{link.title}</span>
+                                            <span className="text-sm text-gray-500">{link.description}</span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* קישורים ליוטיוב */}
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2"><i className="fab fa-youtube text-red-500"></i> סרטונים מומלצים</h3>
+                                <div className="grid gap-4">
+                                    {results.youtubeLinks?.map((link, i) => (
+                                        <a key={i} href={link.url} target="_blank" className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col group border-r-4 border-red-400">
+                                            <span className="font-bold text-gray-800 group-hover:text-red-600">{link.title}</span>
+                                            <span className="text-sm text-gray-500">צפה ביוטיוב <i className="fas fa-external-link-alt text-xs"></i></span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
