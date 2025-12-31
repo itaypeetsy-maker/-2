@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const { query } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY; // המפתח יישמר בהגדרות הענן מאוחר יותר
+  const apiKey = process.env.GEMINI_API_KEY;
 
   try {
     const response = await fetch(
@@ -11,19 +11,19 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `הכן נתיב מחקר לימודי בפורמט JSON עבור: ${query}` }] }],
-          systemInstruction: { 
-            parts: [{ text: "You are an educational researcher. Return ONLY a JSON object with: hint (mysterious Hebrew text), curatedLinks (array of {title, url, description}), and youtubeQueries (array of search terms)." }] 
-          },
-          generationConfig: { responseMimeType: "application/json", temperature: 0.3 }
+          contents: [{ parts: [{ text: `הכן נתיב מחקר לימודי בפורמט JSON עבור הנושא: ${query}. החזר אובייקט עם: hint (משפט פתיחה), ו-curatedLinks (מערך של title, url, description).` }] }],
+          generationConfig: { responseMimeType: "application/json" }
         })
       }
     );
 
     const data = await response.json();
-    const content = data.candidates[0].content.parts[0].text;
-    res.status(200).json(JSON.parse(content));
+    if (data.candidates && data.candidates[0]) {
+      const content = JSON.parse(data.candidates[0].content.parts[0].text);
+      return res.status(200).json(content);
+    }
+    throw new Error('AI failed');
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch research path" });
+    res.status(500).json({ error: "Server Error", details: error.message });
   }
 }
